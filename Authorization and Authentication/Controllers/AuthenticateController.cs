@@ -7,6 +7,9 @@ using System.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using User.Management.Service.Models;
+using User.Management.Service.Services;
+
 
 namespace Authorization_and_Authentication.Controllers
 {
@@ -17,15 +20,20 @@ namespace Authorization_and_Authentication.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
+       
 
         public AuthenticateController(
             UserManager<IdentityUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            IConfiguration configuration)
+            IConfiguration configuration, IEmailService emailService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
+            _emailService = emailService;
+
+
         }
 
 
@@ -49,7 +57,7 @@ namespace Authorization_and_Authentication.Controllers
                     authClaims.Add(new Claim(ClaimTypes.Role, userRole));
                 }
 
-                var token = GetToken(authClaims);
+                var token = GetToken(authClaims, Get_configuration());
 
                 return Ok(new
                 {
@@ -77,6 +85,8 @@ namespace Authorization_and_Authentication.Controllers
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+
+          
 
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
         }
@@ -115,7 +125,12 @@ namespace Authorization_and_Authentication.Controllers
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
         }
 
-        private JwtSecurityToken GetToken(List<Claim> authClaims)
+        private IConfiguration Get_configuration()
+        {
+            return _configuration;
+        }
+
+        private JwtSecurityToken GetToken(List<Claim> authClaims, IConfiguration _configuration)
         {
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
 
@@ -130,6 +145,22 @@ namespace Authorization_and_Authentication.Controllers
             return token;
         }
 
+        [HttpGet]
+
+        public IActionResult TestEmail()
+        {
+            var message = new Message(new string[] { "kagisogilbertho56@gmail.com" },
+                "Test", "@<div><h1>heiiita kg!</h1></div>" );
+            
+            _emailService.SendEmail(message);
+            return StatusCode(StatusCodes.Status200OK,
+                new Response { Status="Success", Message="Email Sent Successfully"});
+
+        }
+
+
+
+        
 
     }
 }
