@@ -9,10 +9,16 @@ namespace Authorization_and_Authentication.Auth
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }
+
+        public DbSet<Employee> Employee { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<Employee>().ToTable("Employee");
         }
+
+        
 
     }
 }
